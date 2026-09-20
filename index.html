@@ -1,190 +1,805 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Factory Self Attendance Manager</title>
-<style>
-*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,Arial;background:#eef2f7;color:#172033}
-header{background:#18253d;color:white;padding:18px 16px;position:sticky;top:0;z-index:5}
-.header{max-width:1100px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:15px}
-h1{margin:0;font-size:22px}.clock{font-weight:700}
-main{max-width:1100px;margin:auto;padding:18px 14px}
-.grid{display:grid;grid-template-columns:330px 1fr;gap:16px}
-.card{background:white;border-radius:16px;padding:17px;box-shadow:0 4px 18px #18253d14;margin-bottom:16px}
-h2{font-size:17px;margin:0 0 14px}.profile{text-align:center}
-.avatar{width:76px;height:76px;border-radius:50%;background:#e6ecf7;display:grid;place-items:center;font-size:32px;margin:0 auto 10px}
-input,select,button{width:100%;padding:11px;border-radius:10px;border:1px solid #d2d9e5;font:inherit}
-button{cursor:pointer;font-weight:700}.primary{background:#1769e0;color:white;border-color:#1769e0}.green{background:#13966b;color:white;border-color:#13966b}.red{background:#d94755;color:white;border-color:#d94755}.secondary{background:#f3f6fa}
-.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}.actions button:last-child{grid-column:1/-1}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.stat{background:#f5f7fb;border-radius:12px;padding:13px}.num{font-size:22px;font-weight:800}.label{font-size:12px;color:#69758b}
-.status{padding:10px;border-radius:10px;background:#f4f7fb;margin:12px 0;font-size:14px}
-.tablewrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:650px}th,td{text-align:left;padding:11px;border-bottom:1px solid #e7ebf1;font-size:13px}th{background:#f6f8fb}
-.badge{padding:4px 8px;border-radius:99px;font-size:11px;font-weight:700}.present{background:#dff6ec;color:#08724e}.late{background:#fff0cf;color:#8a5b00}.absent{background:#ffe2e5;color:#a21f2d}
-.toolbar{display:grid;grid-template-columns:1fr 1fr auto auto;gap:10px;margin-bottom:12px}
-.note{font-size:12px;color:#68758a;line-height:1.5}
-@media(max-width:800px){.grid{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.toolbar{grid-template-columns:1fr 1fr}.toolbar button{width:100%}}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Attendance & Calendar Manager</title>
+    <style>
+        :root {
+            --primary: #0f172a;
+            --accent: #2563eb;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --warning: #d97706;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --border: #e2e8f0;
+            --text: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .hidden { display: none !important; }
+
+        /* Auth Screen */
+        .auth-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 80vh;
+        }
+
+        .auth-card {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .auth-card h2 { margin-bottom: 20px; text-align: center; color: var(--primary); }
+
+        /* Layout Controls */
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+
+        .card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+
+        .form-group { margin-bottom: 15px; }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .btn:hover { opacity: 0.9; }
+        .btn-primary { background-color: var(--accent); color: white; width: 100%; }
+        .btn-success { background-color: var(--success); color: white; }
+        .btn-danger { background-color: var(--danger); color: white; }
+        .btn-logout { background-color: #334155; color: white; }
+        .btn-outline { background-color: transparent; border: 1px solid var(--border); color: var(--text); }
+
+        .action-group { display: flex; gap: 10px; margin-top: 10px; }
+        .action-group .btn { flex: 1; }
+
+        .status-box {
+            text-align: center;
+            padding: 15px;
+            background: #f1f5f9;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        /* Calendar Controls & View */
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            text-align: center;
+        }
+
+        .calendar-day-head {
+            font-weight: 700;
+            padding: 8px 0;
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+
+        .calendar-day {
+            min-height: 75px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 6px;
+            text-align: left;
+            cursor: pointer;
+            background: #fafafa;
+            position: relative;
+            transition: background 0.2s;
+        }
+
+        .calendar-day:hover { background: #f1f5f9; }
+        .calendar-day.empty { background: transparent; border: none; cursor: default; }
+        .calendar-day .day-num { font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; }
+        
+        .day-info {
+            font-size: 0.7rem;
+            padding: 2px 4px;
+            border-radius: 4px;
+            margin-top: 2px;
+        }
+        .bg-work { background-color: #dcfce7; color: var(--success); }
+        .bg-ot { background-color: #fef3c7; color: var(--warning); }
+
+        /* Modal Popup for Manual Editing */
+        .modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 450px;
+        }
+
+        /* Tables */
+        .table-responsive { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 0.85rem; text-align: left; }
+        th { background: #f1f5f9; }
+
+        .badge {
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+        .badge-ot { background: #fef3c7; color: var(--warning); }
+        .badge-normal { background: #dcfce7; color: var(--success); }
+    </style>
 </head>
 <body>
-<header><div class="header"><div><h1>🏭 Factory Self Attendance</h1><div style="font-size:12px;opacity:.75">Employee attendance manager</div></div><div class="clock" id="clock"></div></div></header>
 
-<main>
-<div class="grid">
-<section>
-<div class="card profile">
-  <div class="avatar">👷</div>
-  <h2 id="employeeName">Employee</h2>
-  <div class="note" id="employeeId">Employee ID: —</div>
+<div class="container">
+
+    <!-- LOGIN / REGISTER SECTION -->
+    <div id="authSection" class="auth-wrapper">
+        <div class="auth-card">
+            <h2 id="authTitle">Attendance Manager Login</h2>
+            <div id="authAlert" class="hidden" style="color: red; margin-bottom: 10px; font-size: 0.85rem;"></div>
+            
+            <form id="authForm" onsubmit="handleAuth(event)">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password / PIN</label>
+                    <input type="password" id="password" required>
+                </div>
+                <button type="submit" id="authSubmitBtn" class="btn btn-primary">Login</button>
+            </form>
+            
+            <p style="margin-top: 15px; text-align: center; font-size: 0.85rem;">
+                <span id="authToggleText">First time here?</span>
+                <a href="#" onclick="toggleAuthMode()" style="color: var(--accent); font-weight: bold;">Register Account</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- MAIN APP DASHBOARD -->
+    <div id="appSection" class="hidden">
+        <header>
+            <div>
+                <h2>Welcome, <span id="displayUser">User</span></h2>
+                <p style="font-size: 0.85rem; color: #94a3b8;">Personal Time & Attendance Dashboard</p>
+            </div>
+            <button class="btn btn-logout" onclick="logout()">Logout</button>
+        </header>
+
+        <div class="grid">
+            <!-- Clocking Actions Card -->
+            <div class="card">
+                <h3>Punch Terminal</h3>
+                <hr style="margin: 10px 0; border: none; border-top: 1px solid var(--border);">
+                
+                <div class="status-box">
+                    <p style="font-size: 0.8rem; color: #64748b;">CURRENT SESSION</p>
+                    <h3 id="sessionStatus">Not Clocked In</h3>
+                    <p id="clockInTimeText" style="font-size: 0.8rem; color: #64748b; margin-top: 4px;"></p>
+                </div>
+
+                <div class="action-group">
+                    <button id="clockInBtn" class="btn btn-success" onclick="clockIn()">Clock IN</button>
+                    <button id="clockOutBtn" class="btn btn-danger" onclick="clockOut()" disabled>Clock OUT</button>
+                </div>
+            </div>
+
+            <!-- Configuration / Workday Threshold Card -->
+            <div class="card">
+                <h3>Shift Preferences</h3>
+                <hr style="margin: 10px 0; border: none; border-top: 1px solid var(--border);">
+                <div class="form-group">
+                    <label for="standardHoursInput">Standard Workday Limit (Hours)</label>
+                    <input type="number" id="standardHoursInput" value="8" min="1" max="24" step="0.5" onchange="updateSettings()">
+                </div>
+                <p style="font-size: 0.8rem; color: #64748b;">
+                    * Shifts logged beyond this threshold will automatically calculate as Overtime.
+                </p>
+            </div>
+        </div>
+
+        <!-- MONTHLY CALENDAR VIEW -->
+        <div class="card">
+            <div class="calendar-header">
+                <button class="btn btn-outline" onclick="changeMonth(-1)">◀ Prev</button>
+                <h3 id="calendarMonthYear">Month Year</h3>
+                <button class="btn btn-outline" onclick="changeMonth(1)">Next ▶</button>
+            </div>
+            
+            <div class="calendar-grid" id="calendarGrid">
+                <!-- Dynamic Days Generated Here -->
+            </div>
+            <p style="font-size: 0.8rem; color: #64748b; margin-top: 10px;">
+                💡 <em>Click on any day in the calendar to edit or manually log attendance for that specific date.</em>
+            </p>
+        </div>
+
+        <!-- ATTENDANCE RECORDS TABLE -->
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px;">
+                <h3>Attendance Logs</h3>
+                <div>
+                    <button class="btn btn-outline" onclick="exportData('csv')">📥 CSV</button>
+                    <button class="btn btn-outline" onclick="exportData('json')">📥 JSON</button>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Clock In</th>
+                            <th>Clock Out</th>
+                            <th>Worked Hrs</th>
+                            <th>Overtime</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendanceLogsBody">
+                        <!-- Dynamic Records -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
 </div>
 
-<div class="card">
-<h2>Employee Details</h2>
-<input id="name" placeholder="Full name" style="margin-bottom:9px">
-<input id="empid" placeholder="Employee ID" style="margin-bottom:9px">
-<select id="shift" style="margin-bottom:12px">
-<option value="A">Shift A — 06:00 to 14:00</option>
-<option value="B">Shift B — 14:00 to 22:00</option>
-<option value="C">Shift C — 22:00 to 06:00</option>
-</select>
-<button class="primary" onclick="saveProfile()">Save Employee</button>
+<!-- EDIT DATE MODAL -->
+<div id="editModal" class="modal hidden">
+    <div class="modal-content">
+        <h3 style="margin-bottom: 15px;">Edit Log for <span id="modalDateStr"></span></h3>
+        <input type="hidden" id="modalDateISO">
+        
+        <div class="form-group">
+            <label for="modalClockIn">Clock In Time</label>
+            <input type="time" id="modalClockIn">
+        </div>
+        <div class="form-group">
+            <label for="modalClockOut">Clock Out Time</label>
+            <input type="time" id="modalClockOut">
+        </div>
+        
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+            <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-danger" onclick="deleteModalDate()">Delete Entry</button>
+            <button class="btn btn-success" onclick="saveModalData()">Save Log</button>
+        </div>
+    </div>
 </div>
-
-<div class="card">
-<h2>Today's Attendance</h2>
-<div class="status" id="todayStatus">Not checked in</div>
-<div class="actions">
-<button class="green" id="inBtn" onclick="checkIn()">✓ Check In</button>
-<button class="red" id="outBtn" onclick="checkOut()" disabled>↪ Check Out</button>
-<button class="secondary" onclick="clearToday()">Clear Today's Record</button>
-</div>
-<p class="note">Use Check In when entering the factory and Check Out when leaving. Records are saved in this browser.</p>
-</div>
-</section>
-
-<section>
-<div class="stats">
-<div class="stat"><div class="num" id="days">0</div><div class="label">Days Present</div></div>
-<div class="stat"><div class="num" id="hours">0h</div><div class="label">Hours Worked</div></div>
-<div class="stat"><div class="num" id="late">0</div><div class="label">Late Days</div></div>
-<div class="stat"><div class="num" id="records">0</div><div class="label">Records</div></div>
-</div>
-
-<div class="card" style="margin-top:16px">
-<h2>Attendance Records</h2>
-<div class="toolbar">
-<input type="month" id="month" onchange="render()">
-<input id="search" placeholder="Search date/status" oninput="render()">
-<button class="secondary" onclick="exportCSV()">Export CSV</button>
-<button class="secondary" onclick="resetAll()">Reset All</button>
-</div>
-<div class="tablewrap">
-<table><thead><tr><th>Date</th><th>Shift</th><th>Check In</th><th>Check Out</th><th>Hours</th><th>Status</th></tr></thead>
-<tbody id="tbody"></tbody></table>
-</div>
-</div>
-
-<div class="card">
-<h2>Self Attendance Rules</h2>
-<ul class="note">
-<li>Attendance is stored locally on this device.</li>
-<li>A check-in after the shift start time + 15 minutes is marked Late.</li>
-<li>Hours are calculated automatically from check-in and check-out.</li>
-<li>This prototype does not provide tamper-proof attendance or payroll integration.</li>
-</ul>
-</div>
-</section>
-</div>
-</main>
 
 <script>
-const KEY="factoryAttendanceV1", PROFILE="factoryEmployeeV1";
-let data=JSON.parse(localStorage.getItem(KEY)||"{}");
-let profile=JSON.parse(localStorage.getItem(PROFILE)||"{}");
+    // System Variables
+    let isRegisterMode = false;
+    let currentUser = null;
+    let logs = [];
+    let standardWorkHours = 8;
+    let currentDateView = new Date();
 
-const $=id=>document.getElementById(id);
-function pad(n){return String(n).padStart(2,"0")}
-function dateKey(d=new Date()){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())}
-function timeStr(d=new Date()){return pad(d.getHours())+":"+pad(d.getMinutes())}
-function save(){localStorage.setItem(KEY,JSON.stringify(data))}
-function saveProfile(){
- profile={name:$("name").value.trim()||"Employee",id:$("empid").value.trim()||"—",shift:$("shift").value};
- localStorage.setItem(PROFILE,JSON.stringify(profile));loadProfile();render();
-}
-function loadProfile(){
- $("name").value=profile.name||"";
- $("empid").value=profile.id||"";
- $("shift").value=profile.shift||"A";
- $("employeeName").textContent=profile.name||"Employee";
- $("employeeId").textContent="Employee ID: "+(profile.id||"—");
-}
-function shiftStart(shift){
- return ({A:"06:00",B:"14:00",C:"22:00"})[shift]||"06:00";
-}
-function minutes(t){let [h,m]=t.split(":").map(Number);return h*60+m}
-function checkIn(){
- if(!profile.name){alert("Please save employee details first.");return}
- const k=dateKey(), now=new Date(), t=timeStr(now);
- if(data[k]?.in){alert("Already checked in today.");return}
- const late=minutes(t)>minutes(shiftStart(profile.shift||"A"))+15;
- data[k]={shift:profile.shift||"A",in:t,out:"",late};
- save();render();
-}
-function checkOut(){
- const k=dateKey();
- if(!data[k]?.in){alert("Please check in first.");return}
- if(data[k].out){alert("Already checked out today.");return}
- data[k].out=timeStr();
- save();render();
-}
-function clearToday(){
- const k=dateKey();
- if(confirm("Clear today's attendance record?")){delete data[k];save();render()}
-}
-function hoursOf(r){
- if(!r?.in||!r?.out)return "";
- let a=minutes(r.in),b=minutes(r.out);
- if(b<a)b+=1440;
- return ((b-a)/60).toFixed(2);
-}
-function render(){
- const k=dateKey(), today=data[k];
- if(today){
-   $("todayStatus").innerHTML=`Checked in <b>${today.in}</b>`+(today.out?` · Checked out <b>${today.out}</b> · ${hoursOf(today)} hours`:" · <b>Still working</b>")+(today.late?" · <span class='badge late'>Late</span>":"");
- }else $("todayStatus").textContent="Not checked in";
- $("inBtn").disabled=!!today?.in;
- $("outBtn").disabled=!today?.in||!!today?.out;
+    const USERS_KEY = 'attendance_app_users';
+    const ACTIVE_USER_KEY = 'attendance_app_active_user';
 
- const month=$("month").value||new Date().toISOString().slice(0,7);
- const q=$("search").value.toLowerCase();
- const rows=Object.entries(data).filter(([d,r])=>(!month||d.startsWith(month)) && (!q||`${d} ${r.shift} ${r.in} ${r.out} ${r.late?"late":"present"}`.toLowerCase().includes(q))).sort((a,b)=>b[0].localeCompare(a[0]));
- $("tbody").innerHTML=rows.length?rows.map(([d,r])=>`<tr><td>${d}</td><td>Shift ${r.shift}</td><td>${r.in||"—"}</td><td>${r.out||"—"}</td><td>${hoursOf(r)||"—"}</td><td><span class="badge ${r.late?"late":"present"}">${r.late?"Late":"Present"}</span></td></tr>`).join(""):`<tr><td colspan="6">No attendance records.</td></tr>`;
+    document.addEventListener("DOMContentLoaded", () => {
+        checkActiveSession();
+    });
 
- const all=Object.values(data), complete=all.filter(r=>r.in);
- $("days").textContent=complete.length;
- $("hours").textContent=complete.reduce((s,r)=>s+parseFloat(hoursOf(r)||0),0).toFixed(1)+"h";
- $("late").textContent=complete.filter(r=>r.late).length;
- $("records").textContent=all.length;
-}
-function exportCSV(){
- const rows=[["Date","Shift","Check In","Check Out","Hours","Status"]];
- Object.entries(data).sort().forEach(([d,r])=>rows.push([d,r.shift,r.in,r.out,hoursOf(r),r.late?"Late":"Present"]));
- const csv=rows.map(r=>r.map(x=>`"${String(x??"").replaceAll('"','""')}"`).join(",")).join("\n");
- const blob=new Blob([csv],{type:"text/csv"}),a=document.createElement("a");
- a.href=URL.createObjectURL(blob);a.download="factory-attendance.csv";a.click();URL.revokeObjectURL(a.href);
-}
-function resetAll(){
- if(confirm("Delete all attendance records from this browser?")){
-   data={};save();render();
- }
-}
-function clock(){
- const d=new Date();
- $("clock").textContent=d.toLocaleDateString()+" "+d.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit",second:"2-digit"});
-}
-profile.shift=profile.shift||"A";loadProfile();
-$("month").value=new Date().toISOString().slice(0,7);
-clock();setInterval(clock,1000);render();
+    // --- AUTHENTICATION ---
+    function toggleAuthMode() {
+        isRegisterMode = !isRegisterMode;
+        document.getElementById('authTitle').innerText = isRegisterMode ? "Register Account" : "Attendance Manager Login";
+        document.getElementById('authSubmitBtn').innerText = isRegisterMode ? "Create Account" : "Login";
+        document.getElementById('authToggleText').innerText = isRegisterMode ? "Already have an account?" : "First time here?";
+        document.getElementById('authAlert').classList.add('hidden');
+    }
+
+    function handleAuth(e) {
+        e.preventDefault();
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value.trim();
+
+        if (!username || !password) return;
+
+        const users = JSON.parse(localStorage.getItem(USERS_KEY)) || {};
+
+        if (isRegisterMode) {
+            if (users[username]) {
+                showAuthAlert("Username already exists.");
+                return;
+            }
+            users[username] = { password, settings: { standardHours: 8 }, logs: [] };
+            localStorage.setItem(USERS_KEY, JSON.stringify(users));
+            loginUser(username);
+        } else {
+            if (!users[username] || users[username].password !== password) {
+                showAuthAlert("Invalid credentials.");
+                return;
+            }
+            loginUser(username);
+        }
+    }
+
+    function showAuthAlert(msg) {
+        const el = document.getElementById('authAlert');
+        el.innerText = msg;
+        el.classList.remove('hidden');
+    }
+
+    function loginUser(username) {
+        currentUser = username;
+        localStorage.setItem(ACTIVE_USER_KEY, username);
+        loadUserData();
+        showAppScreen();
+    }
+
+    function checkActiveSession() {
+        const activeUser = localStorage.getItem(ACTIVE_USER_KEY);
+        if (activeUser) {
+            currentUser = activeUser;
+            loadUserData();
+            showAppScreen();
+        } else {
+            showAuthScreen();
+        }
+    }
+
+    function logout() {
+        currentUser = null;
+        localStorage.removeItem(ACTIVE_USER_KEY);
+        showAuthScreen();
+    }
+
+    function showAuthScreen() {
+        document.getElementById('authSection').classList.remove('hidden');
+        document.getElementById('appSection').classList.add('hidden');
+    }
+
+    function showAppScreen() {
+        document.getElementById('authSection').classList.add('hidden');
+        document.getElementById('appSection').classList.remove('hidden');
+        document.getElementById('displayUser').innerText = currentUser;
+    }
+
+    // --- DATA HANDLING ---
+    function loadUserData() {
+        const users = JSON.parse(localStorage.getItem(USERS_KEY)) || {};
+        const userData = users[currentUser] || { settings: { standardHours: 8 }, logs: [] };
+
+        logs = userData.logs || [];
+        standardWorkHours = userData.settings?.standardHours || 8;
+
+        document.getElementById('standardHoursInput').value = standardWorkHours;
+
+        updateClockUI();
+        renderTable();
+        renderCalendar();
+    }
+
+    function saveUserData() {
+        const users = JSON.parse(localStorage.getItem(USERS_KEY)) || {};
+        if (currentUser && users[currentUser]) {
+            users[currentUser].logs = logs;
+            users[currentUser].settings = { standardHours: standardWorkHours };
+            localStorage.setItem(USERS_KEY, JSON.stringify(users));
+        }
+    }
+
+    function updateSettings() {
+        const val = parseFloat(document.getElementById('standardHoursInput').value);
+        if (!isNaN(val) && val > 0) {
+            standardWorkHours = val;
+            saveUserData();
+            renderTable();
+            renderCalendar();
+        }
+    }
+
+    // --- CLOCK IN/OUT ENGINE ---
+    function clockIn() {
+        const now = new Date();
+        const activeRecord = logs.find(log => log.clockOut === null);
+
+        if (activeRecord) {
+            alert("Already clocked in!");
+            return;
+        }
+
+        const dateKey = formatDateKey(now);
+        
+        const newLog = {
+            id: Date.now(),
+            date: dateKey,
+            clockIn: now.toISOString(),
+            clockOut: null,
+            totalHours: 0,
+            overtime: 0
+        };
+
+        logs.push(newLog);
+        saveUserData();
+        updateClockUI();
+        renderTable();
+        renderCalendar();
+    }
+
+    function clockOut() {
+        const activeRecord = logs.find(log => log.clockOut === null);
+
+        if (!activeRecord) {
+            alert("No active session found.");
+            return;
+        }
+
+        const now = new Date();
+        const clockInTime = new Date(activeRecord.clockIn);
+
+        const totalHours = ((now - clockInTime) / (1000 * 60 * 60));
+        let overtime = 0;
+        if (totalHours > standardWorkHours) overtime = totalHours - standardWorkHours;
+
+        activeRecord.clockOut = now.toISOString();
+        activeRecord.totalHours = totalHours.toFixed(2);
+        activeRecord.overtime = overtime.toFixed(2);
+
+        saveUserData();
+        updateClockUI();
+        renderTable();
+        renderCalendar();
+    }
+
+    function deleteLog(id) {
+        if (confirm("Delete this attendance entry?")) {
+            logs = logs.filter(l => l.id !== id);
+            saveUserData();
+            updateClockUI();
+            renderTable();
+            renderCalendar();
+        }
+    }
+
+    function updateClockUI() {
+        const activeRecord = logs.find(log => log.clockOut === null);
+        const statusText = document.getElementById('sessionStatus');
+        const timeText = document.getElementById('clockInTimeText');
+        const btnIn = document.getElementById('clockInBtn');
+        const btnOut = document.getElementById('clockOutBtn');
+
+        if (activeRecord) {
+            statusText.innerText = "ACTIVE SHIFT";
+            statusText.style.color = "var(--success)";
+            timeText.innerText = `Clocked In: ${formatTime(activeRecord.clockIn)}`;
+            btnIn.disabled = true;
+            btnOut.disabled = false;
+        } else {
+            statusText.innerText = "Not Clocked In";
+            statusText.style.color = "var(--primary)";
+            timeText.innerText = "";
+            btnIn.disabled = false;
+            btnOut.disabled = true;
+        }
+    }
+
+    // --- MONTHLY CALENDAR VIEW ---
+    function renderCalendar() {
+        const grid = document.getElementById('calendarGrid');
+        grid.innerHTML = '';
+
+        const year = currentDateView.getFullYear();
+        const month = currentDateView.getMonth();
+
+        document.getElementById('calendarMonthYear').innerText = 
+            new Date(year, month).toLocaleString('default', { month: 'long', year: 'numeric' });
+
+        // Days Header
+        const daysHead = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        daysHead.forEach(d => {
+            const div = document.createElement('div');
+            div.className = 'calendar-day-head';
+            div.innerText = d;
+            grid.appendChild(div);
+        });
+
+        const firstDayIdx = new Date(year, month, 1).getDay();
+        const totalDays = new Date(year, month + 1, 0).getDate();
+
+        // Empty Padding cells
+        for (let i = 0; i < firstDayIdx; i++) {
+            const emptyDiv = document.createElement('div');
+            emptyDiv.className = 'calendar-day empty';
+            grid.appendChild(emptyDiv);
+        }
+
+        // Calendar Day Cells
+        for (let day = 1; day <= totalDays; day++) {
+            const cellDateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const dayLog = logs.find(l => l.date === cellDateKey);
+
+            const dayDiv = document.createElement('div');
+            dayDiv.className = 'calendar-day';
+            dayDiv.onclick = () => openModalForDate(cellDateKey);
+
+            let content = `<div class="day-num">${day}</div>`;
+
+            if (dayLog) {
+                if (dayLog.clockOut) {
+                    content += `<div class="day-info bg-work">${dayLog.totalHours} hrs</div>`;
+                    if (parseFloat(dayLog.overtime) > 0) {
+                        content += `<div class="day-info bg-ot">+${dayLog.overtime}h OT</div>`;
+                    }
+                } else {
+                    content += `<div class="day-info" style="background:#dbeafe; color:var(--accent);">Active</div>`;
+                }
+            }
+
+            dayDiv.innerHTML = content;
+            grid.appendChild(dayDiv);
+        }
+    }
+
+    function changeMonth(offset) {
+        currentDateView.setMonth(currentDateView.getMonth() + offset);
+        renderCalendar();
+    }
+
+    // --- EDIT PARTICULAR DATE MODAL ---
+    function openModalForDate(dateKey) {
+        document.getElementById('modalDateISO').value = dateKey;
+        document.getElementById('modalDateStr').innerText = dateKey;
+
+        const dayLog = logs.find(l => l.date === dateKey);
+
+        if (dayLog) {
+            document.getElementById('modalClockIn').value = dayLog.clockIn ? extractTimeString(dayLog.clockIn) : '';
+            document.getElementById('modalClockOut').value = dayLog.clockOut ? extractTimeString(dayLog.clockOut) : '';
+        } else {
+            document.getElementById('modalClockIn').value = '';
+            document.getElementById('modalClockOut').value = '';
+        }
+
+        document.getElementById('editModal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+        document.getElementById('editModal').classList.add('hidden');
+    }
+
+    function saveModalData() {
+        const dateKey = document.getElementById('modalDateISO').value;
+        const timeIn = document.getElementById('modalClockIn').value;
+        const timeOut = document.getElementById('modalClockOut').value;
+
+        if (!timeIn || !timeOut) {
+            alert("Please provide both Clock In and Clock Out times.");
+            return;
+        }
+
+        const clockInISO = new Date(`${dateKey}T${timeIn}:00`).toISOString();
+        const clockOutISO = new Date(`${dateKey}T${timeOut}:00`).toISOString();
+
+        const diffInMs = new Date(clockOutISO) - new Date(clockInISO);
+        
+        if (diffInMs <= 0) {
+            alert("Clock Out time must be after Clock In time.");
+            return;
+        }
+
+        const totalHours = (diffInMs / (1000 * 60 * 60));
+        let overtime = 0;
+        if (totalHours > standardWorkHours) overtime = totalHours - standardWorkHours;
+
+        const existingIdx = logs.findIndex(l => l.date === dateKey);
+
+        const newRecord = {
+            id: existingIdx !== -1 ? logs[existingIdx].id : Date.now(),
+            date: dateKey,
+            clockIn: clockInISO,
+            clockOut: clockOutISO,
+            totalHours: totalHours.toFixed(2),
+            overtime: overtime.toFixed(2)
+        };
+
+        if (existingIdx !== -1) {
+            logs[existingIdx] = newRecord;
+        } else {
+            logs.push(newRecord);
+        }
+
+        saveUserData();
+        closeModal();
+        updateClockUI();
+        renderTable();
+        renderCalendar();
+    }
+
+    function deleteModalDate() {
+        const dateKey = document.getElementById('modalDateISO').value;
+        const existingIdx = logs.findIndex(l => l.date === dateKey);
+
+        if (existingIdx !== -1) {
+            if (confirm(`Are you sure you want to delete data for ${dateKey}?`)) {
+                logs.splice(existingIdx, 1);
+                saveUserData();
+                closeModal();
+                updateClockUI();
+                renderTable();
+                renderCalendar();
+            }
+        } else {
+            closeModal();
+        }
+    }
+
+    // --- TABLE RENDER ---
+    function renderTable() {
+        const tbody = document.getElementById('attendanceLogsBody');
+        tbody.innerHTML = '';
+
+        if (logs.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#94a3b8;">No records logged yet.</td></tr>`;
+            return;
+        }
+
+        [...logs].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(log => {
+            const isCompleted = log.clockOut !== null;
+            const row = document.createElement('tr');
+
+            let badge = `<span class="badge" style="background:#dbeafe; color:var(--accent)">Active</span>`;
+            if (isCompleted) {
+                badge = parseFloat(log.overtime) > 0 
+                    ? `<span class="badge badge-ot">OT (+${log.overtime}h)</span>` 
+                    : `<span class="badge badge-normal">Standard</span>`;
+            }
+
+            row.innerHTML = `
+                <td><strong>${log.date}</strong></td>
+                <td>${formatTime(log.clockIn)}</td>
+                <td>${log.clockOut ? formatTime(log.clockOut) : '--:--'}</td>
+                <td>${isCompleted ? log.totalHours + ' hrs' : 'Running...'}</td>
+                <td>${isCompleted ? log.overtime + ' hrs' : '--'}</td>
+                <td>${badge}</td>
+                <td>
+                    <button class="btn btn-outline" style="padding:2px 6px; font-size:0.75rem" onclick="openModalForDate('${log.date}')">Edit</button>
+                    <button class="btn btn-danger" style="padding:2px 6px; font-size:0.75rem" onclick="deleteLog(${log.id})">Delete</button>
+                </td>
+            `;
+
+            tbody.appendChild(row);
+        });
+    }
+
+    // --- UTILS & EXPORT ---
+    function formatDateKey(dateObj) {
+        const y = dateObj.getFullYear();
+        const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const d = String(dateObj.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    }
+
+    function formatTime(isoString) {
+        if (!isoString) return '--:--';
+        return new Date(isoString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function extractTimeString(isoString) {
+        const d = new Date(isoString);
+        return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    }
+
+    function exportData(format) {
+        if (logs.length === 0) {
+            alert("No data available to export.");
+            return;
+        }
+
+        const fileName = `Attendance_Report_${currentUser}_${new Date().toISOString().slice(0, 10)}`;
+
+        if (format === 'json') {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(logs, null, 2));
+            triggerDownload(dataStr, `${fileName}.json`);
+        } else if (format === 'csv') {
+            let csv = "data:text/csv;charset=utf-8,ID,Date,Clock In,Clock Out,Total Hours,Overtime Hours\n";
+            logs.forEach(l => {
+                csv += `${l.id},"${l.date}","${l.clockIn || ''}","${l.clockOut || ''}",${l.totalHours},${l.overtime}\n`;
+            });
+            triggerDownload(csv, `${fileName}.csv`);
+        }
+    }
+
+    function triggerDownload(contentURI, fileName) {
+        const anchor = document.createElement('a');
+        anchor.setAttribute("href", contentURI);
+        anchor.setAttribute("download", fileName);
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+    }
 </script>
+
 </body>
 </html>
