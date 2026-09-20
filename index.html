@@ -236,7 +236,7 @@
             
             <p style="margin-top: 15px; text-align: center; font-size: 0.85rem;">
                 <span id="authToggleText">First time here?</span>
-                <a href="#" onclick="toggleAuthMode()" style="color: var(--accent); font-weight: bold;">Create an account</a>
+                <a href="#" id="RL" onclick="toggleAuthMode()" style="color: var(--accent); font-weight: bold;">Register Account</a>
             </p>
         </div>
     </div>
@@ -375,7 +375,8 @@
         isRegisterMode = !isRegisterMode;
         document.getElementById('authTitle').innerText = isRegisterMode ? "Register Account" : "Attendance Manager Login";
         document.getElementById('authSubmitBtn').innerText = isRegisterMode ? "Create Account" : "Login";
-        document.getElementById('authToggleText').innerText = isRegisterMode ? "Already have an account?" : "First time here?";
+        document.getElementById('RL').innerText = isRegisterMode ? "Login Here" : "Create a new Account";
+        document.getElementById('authToggleText').innerText = isRegisterMode ? "Already have an Account? " : "New User? ";
         document.getElementById('authAlert').classList.add('hidden');
     }
 
