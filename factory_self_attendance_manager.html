@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Factory Self Attendance Manager</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,Arial;background:#eef2f7;color:#172033}
+header{background:#18253d;color:white;padding:18px 16px;position:sticky;top:0;z-index:5}
+.header{max-width:1100px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:15px}
+h1{margin:0;font-size:22px}.clock{font-weight:700}
+main{max-width:1100px;margin:auto;padding:18px 14px}
+.grid{display:grid;grid-template-columns:330px 1fr;gap:16px}
+.card{background:white;border-radius:16px;padding:17px;box-shadow:0 4px 18px #18253d14;margin-bottom:16px}
+h2{font-size:17px;margin:0 0 14px}.profile{text-align:center}
+.avatar{width:76px;height:76px;border-radius:50%;background:#e6ecf7;display:grid;place-items:center;font-size:32px;margin:0 auto 10px}
+input,select,button{width:100%;padding:11px;border-radius:10px;border:1px solid #d2d9e5;font:inherit}
+button{cursor:pointer;font-weight:700}.primary{background:#1769e0;color:white;border-color:#1769e0}.green{background:#13966b;color:white;border-color:#13966b}.red{background:#d94755;color:white;border-color:#d94755}.secondary{background:#f3f6fa}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}.actions button:last-child{grid-column:1/-1}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.stat{background:#f5f7fb;border-radius:12px;padding:13px}.num{font-size:22px;font-weight:800}.label{font-size:12px;color:#69758b}
+.status{padding:10px;border-radius:10px;background:#f4f7fb;margin:12px 0;font-size:14px}
+.tablewrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:650px}th,td{text-align:left;padding:11px;border-bottom:1px solid #e7ebf1;font-size:13px}th{background:#f6f8fb}
+.badge{padding:4px 8px;border-radius:99px;font-size:11px;font-weight:700}.present{background:#dff6ec;color:#08724e}.late{background:#fff0cf;color:#8a5b00}.absent{background:#ffe2e5;color:#a21f2d}
+.toolbar{display:grid;grid-template-columns:1fr 1fr auto auto;gap:10px;margin-bottom:12px}
+.note{font-size:12px;color:#68758a;line-height:1.5}
+@media(max-width:800px){.grid{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.toolbar{grid-template-columns:1fr 1fr}.toolbar button{width:100%}}
+</style>
+</head>
+<body>
+<header><div class="header"><div><h1>🏭 Factory Self Attendance</h1><div style="font-size:12px;opacity:.75">Employee attendance manager</div></div><div class="clock" id="clock"></div></div></header>
+
+<main>
+<div class="grid">
+<section>
+<div class="card profile">
+  <div class="avatar">👷</div>
+  <h2 id="employeeName">Employee</h2>
+  <div class="note" id="employeeId">Employee ID: —</div>
+</div>
+
+<div class="card">
+<h2>Employee Details</h2>
+<input id="name" placeholder="Full name" style="margin-bottom:9px">
+<input id="empid" placeholder="Employee ID" style="margin-bottom:9px">
+<select id="shift" style="margin-bottom:12px">
+<option value="A">Shift A — 06:00 to 14:00</option>
+<option value="B">Shift B — 14:00 to 22:00</option>
+<option value="C">Shift C — 22:00 to 06:00</option>
+</select>
+<button class="primary" onclick="saveProfile()">Save Employee</button>
+</div>
+
+<div class="card">
+<h2>Today's Attendance</h2>
+<div class="status" id="todayStatus">Not checked in</div>
+<div class="actions">
+<button class="green" id="inBtn" onclick="checkIn()">✓ Check In</button>
+<button class="red" id="outBtn" onclick="checkOut()" disabled>↪ Check Out</button>
+<button class="secondary" onclick="clearToday()">Clear Today's Record</button>
+</div>
+<p class="note">Use Check In when entering the factory and Check Out when leaving. Records are saved in this browser.</p>
+</div>
+</section>
+
+<section>
+<div class="stats">
+<div class="stat"><div class="num" id="days">0</div><div class="label">Days Present</div></div>
+<div class="stat"><div class="num" id="hours">0h</div><div class="label">Hours Worked</div></div>
+<div class="stat"><div class="num" id="late">0</div><div class="label">Late Days</div></div>
+<div class="stat"><div class="num" id="records">0</div><div class="label">Records</div></div>
+</div>
+
+<div class="card" style="margin-top:16px">
+<h2>Attendance Records</h2>
+<div class="toolbar">
+<input type="month" id="month" onchange="render()">
+<input id="search" placeholder="Search date/status" oninput="render()">
+<button class="secondary" onclick="exportCSV()">Export CSV</button>
+<button class="secondary" onclick="resetAll()">Reset All</button>
+</div>
+<div class="tablewrap">
+<table><thead><tr><th>Date</th><th>Shift</th><th>Check In</th><th>Check Out</th><th>Hours</th><th>Status</th></tr></thead>
+<tbody id="tbody"></tbody></table>
+</div>
+</div>
+
+<div class="card">
+<h2>Self Attendance Rules</h2>
+<ul class="note">
+<li>Attendance is stored locally on this device.</li>
+<li>A check-in after the shift start time + 15 minutes is marked Late.</li>
+<li>Hours are calculated automatically from check-in and check-out.</li>
+<li>This prototype does not provide tamper-proof attendance or payroll integration.</li>
+</ul>
+</div>
+</section>
+</div>
+</main>
+
+<script>
+const KEY="factoryAttendanceV1", PROFILE="factoryEmployeeV1";
+let data=JSON.parse(localStorage.getItem(KEY)||"{}");
+let profile=JSON.parse(localStorage.getItem(PROFILE)||"{}");
+
+const $=id=>document.getElementById(id);
+function pad(n){return String(n).padStart(2,"0")}
+function dateKey(d=new Date()){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())}
+function timeStr(d=new Date()){return pad(d.getHours())+":"+pad(d.getMinutes())}
+function save(){localStorage.setItem(KEY,JSON.stringify(data))}
+function saveProfile(){
+ profile={name:$("name").value.trim()||"Employee",id:$("empid").value.trim()||"—",shift:$("shift").value};
+ localStorage.setItem(PROFILE,JSON.stringify(profile));loadProfile();render();
+}
+function loadProfile(){
+ $("name").value=profile.name||"";
+ $("empid").value=profile.id||"";
+ $("shift").value=profile.shift||"A";
+ $("employeeName").textContent=profile.name||"Employee";
+ $("employeeId").textContent="Employee ID: "+(profile.id||"—");
+}
+function shiftStart(shift){
+ return ({A:"06:00",B:"14:00",C:"22:00"})[shift]||"06:00";
+}
+function minutes(t){let [h,m]=t.split(":").map(Number);return h*60+m}
+function checkIn(){
+ if(!profile.name){alert("Please save employee details first.");return}
+ const k=dateKey(), now=new Date(), t=timeStr(now);
+ if(data[k]?.in){alert("Already checked in today.");return}
+ const late=minutes(t)>minutes(shiftStart(profile.shift||"A"))+15;
+ data[k]={shift:profile.shift||"A",in:t,out:"",late};
+ save();render();
+}
+function checkOut(){
+ const k=dateKey();
+ if(!data[k]?.in){alert("Please check in first.");return}
+ if(data[k].out){alert("Already checked out today.");return}
+ data[k].out=timeStr();
+ save();render();
+}
+function clearToday(){
+ const k=dateKey();
+ if(confirm("Clear today's attendance record?")){delete data[k];save();render()}
+}
+function hoursOf(r){
+ if(!r?.in||!r?.out)return "";
+ let a=minutes(r.in),b=minutes(r.out);
+ if(b<a)b+=1440;
+ return ((b-a)/60).toFixed(2);
+}
+function render(){
+ const k=dateKey(), today=data[k];
+ if(today){
+   $("todayStatus").innerHTML=`Checked in <b>${today.in}</b>`+(today.out?` · Checked out <b>${today.out}</b> · ${hoursOf(today)} hours`:" · <b>Still working</b>")+(today.late?" · <span class='badge late'>Late</span>":"");
+ }else $("todayStatus").textContent="Not checked in";
+ $("inBtn").disabled=!!today?.in;
+ $("outBtn").disabled=!today?.in||!!today?.out;
+
+ const month=$("month").value||new Date().toISOString().slice(0,7);
+ const q=$("search").value.toLowerCase();
+ const rows=Object.entries(data).filter(([d,r])=>(!month||d.startsWith(month)) && (!q||`${d} ${r.shift} ${r.in} ${r.out} ${r.late?"late":"present"}`.toLowerCase().includes(q))).sort((a,b)=>b[0].localeCompare(a[0]));
+ $("tbody").innerHTML=rows.length?rows.map(([d,r])=>`<tr><td>${d}</td><td>Shift ${r.shift}</td><td>${r.in||"—"}</td><td>${r.out||"—"}</td><td>${hoursOf(r)||"—"}</td><td><span class="badge ${r.late?"late":"present"}">${r.late?"Late":"Present"}</span></td></tr>`).join(""):`<tr><td colspan="6">No attendance records.</td></tr>`;
+
+ const all=Object.values(data), complete=all.filter(r=>r.in);
+ $("days").textContent=complete.length;
+ $("hours").textContent=complete.reduce((s,r)=>s+parseFloat(hoursOf(r)||0),0).toFixed(1)+"h";
+ $("late").textContent=complete.filter(r=>r.late).length;
+ $("records").textContent=all.length;
+}
+function exportCSV(){
+ const rows=[["Date","Shift","Check In","Check Out","Hours","Status"]];
+ Object.entries(data).sort().forEach(([d,r])=>rows.push([d,r.shift,r.in,r.out,hoursOf(r),r.late?"Late":"Present"]));
+ const csv=rows.map(r=>r.map(x=>`"${String(x??"").replaceAll('"','""')}"`).join(",")).join("\n");
+ const blob=new Blob([csv],{type:"text/csv"}),a=document.createElement("a");
+ a.href=URL.createObjectURL(blob);a.download="factory-attendance.csv";a.click();URL.revokeObjectURL(a.href);
+}
+function resetAll(){
+ if(confirm("Delete all attendance records from this browser?")){
+   data={};save();render();
+ }
+}
+function clock(){
+ const d=new Date();
+ $("clock").textContent=d.toLocaleDateString()+" "+d.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit",second:"2-digit"});
+}
+profile.shift=profile.shift||"A";loadProfile();
+$("month").value=new Date().toISOString().slice(0,7);
+clock();setInterval(clock,1000);render();
+</script>
+</body>
+</html>
